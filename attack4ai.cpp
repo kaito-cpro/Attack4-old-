@@ -98,7 +98,6 @@ enum f_c player_turn_computer(){
     number_com = GetRandom(1, 7);
     if (check_7_over(number_com) == true) break;
   }
-  printf("%d\n", number_com);
   return after_choose_number(number_com);
 }
 
@@ -369,11 +368,11 @@ void do_step(string str){
     if (check_7_over(step) == false){
       v[1][1] = -1;  //異常として知らせる
     }
-    for (int i = 7; i >= 1; i--){
-      if (v[i][step] != Mark_1 && v[i][step] != Mark_2){
+    for (int j = 7; j >= 1; j--){
+      if (v[j][step] != Mark_1 && v[j][step] != Mark_2){
         switch (player){
-          case 1: v[i][step] = Mark_1;  player = 2;  break;
-          case 2: v[i][step] = Mark_2;  player = 1;  break;
+          case 1: v[j][step] = Mark_1;  player = 2;  break;
+          case 2: v[j][step] = Mark_2;  player = 1;  break;
         }
         break;
       }
@@ -410,6 +409,7 @@ bool check_reach(int i, int j, int player){
               return false;
             }
   }
+  return false;
 }
 
 
@@ -419,8 +419,9 @@ bool check_absolute_win(int player){
   int cnt = 0;
   check_3_line();
   switch (player){
-    case 1: if (cnt_3_line_vd_1 >= 1){
-              for (int j = 7; j >= 1; j++){
+    case 1: 
+            if (cnt_3_line_vd_1 >= 1){
+              for (int j = 7; j >= 1; j--){
                 for (int i = 1; i <= 7; i++){
                   if (vd_1[i][j] >= 1 && check_put_able(i, j) == true){
                     cnt++;
@@ -440,8 +441,9 @@ bool check_absolute_win(int player){
               }
             }
             return f;
-    case 2: if (cnt_3_line_vd_2 >= 1){
-              for (int j = 7; j >= 1; j++){
+    case 2: 
+            if (cnt_3_line_vd_2 >= 1){
+              for (int j = 7; j >= 1; j--){
                 for (int i = 1; i <= 7; i++){
                   if (vd_2[i][j] >= 1 && check_put_able(i, j) == true){
                     cnt++;
@@ -462,6 +464,7 @@ bool check_absolute_win(int player){
             }
             return f;
   }
+  return false;
 }
 
 

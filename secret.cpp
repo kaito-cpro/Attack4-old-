@@ -20,17 +20,17 @@ int main(){
   while (cin.getline(c, sizeof(c))){
     while (1){
       if (search_th() == true){
-      cout << c << endl;
-      for (int i = strlen(c); i < 85; i++){
-      　c[i] = '\0';
-    　}
-      break;
+      　cout << c << endl;
+      　for (int i = 0; i < 85; i++){
+      　　c[i] = '\0';
+    　　}
+     　 break;
       }
-      for (int j = 0; j < strlen(c); j++){
-        if (c[j] >= 'a' && c[j] <= 'y'){
-          c[j]++;
-        } else if (c[j] == 'z'){
-          c[j] = 'a';
+      for (int i = 0; i < strlen(c); i++){
+        if (c[i] >= 'a' && c[i] <= 'y'){
+          c[i]++;
+        } else if (c[i] == 'z'){
+          c[i] = 'a';
         }
       }
     }

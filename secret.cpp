@@ -21,6 +21,9 @@ int main(){
     while (1){
       if (search_th() == true){
       cout << c << endl;
+      for (int i = strlen(c); i < 85; i++){
+      　c[i] = '\0';
+    　}
       break;
       }
       for (int j = 0; j < strlen(c); j++){
@@ -30,9 +33,6 @@ int main(){
           c[j] = 'a';
         }
       }
-    }
-    for (int i = strlen(c); i < 85; i++){
-      c[i] = '\0';
     }
   }
   return 0;

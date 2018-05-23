@@ -98,6 +98,7 @@ enum f_c player_turn_computer(){
     number_com = GetRandom(1, 7);
     if (check_7_over(number_com) == true) break;
   }
+  printf("%d\n", number_com);
   return after_choose_number(number_com);
 }
 

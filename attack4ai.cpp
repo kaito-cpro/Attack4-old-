@@ -1,9 +1,9 @@
 #include<iostream>
 #include<cstdio>
 #include<cmath>
-#include<vector>
-#include<list>
-#include<set>
+#include<vector>           //delとかabsolute_winとかは緩いけど、queueはきちんと動いてるver.
+#include<list>             //絞り込みアルゴリズム未搭載
+#include<set>              //delせずに置かな負けるよってところあり
 #include<map>
 #include<stack>
 #include<queue>
@@ -21,11 +21,9 @@ using namespace std;
 enum f_c {Finish = 3, Continue = 4};
 #define Mark_1 100
 #define Mark_2 200
-#define INF 10000000;
 
 enum f_c player_turn_computer();
 void expect();
-void do_step(string);
 void rule();
 void set_v();
 void rand_rand();
@@ -40,6 +38,7 @@ enum f_c player_2();
 enum f_c player_turn_human();
 enum f_c after_choose_number(int);
 int GetRandom(int, int);
+void do_step(string);
 bool check_put_able(int, int);
 bool check_reach(int, int, int);
 bool check_absolute_win(int);
@@ -50,7 +49,7 @@ void check_3_line();
 
 int v[9][9];  //0と8は周囲として用意しておく
 int v_cp[9][9];
-int ex[8] = {0};  //期待値(ex[0]は使わない)
+int ex[8] = {0};  //期待値(exp[0]は使わない)
 int vd_1[9][9];
 int vd_2[9][9];
 int cnt_3_line_vd_1 = 0;  //リーチの数
@@ -89,24 +88,24 @@ enum f_c player_turn_computer(){
     check_3_line_urge(1);
   }
   if (decide_com == false){
-    /////strategy();
+    strategy();
   }
   if (decide_com == false){
     expect();
   }
-  while (decide_com == false){
+  /*while (decide_com == false){
     number_com = GetRandom(1, 7);
-    if (check_7_over(number_com) == true){
-      break;
-    }
-  }
+    if (check_7_over(number_com) == true) break;
+  }*/
   printf("%d\n", number_com);
   return after_choose_number(number_com);
 }
 
 
 void expect(){
-  int que_num = 0;
+  for (int j = 1; j <= 7; j++){
+    ex[j] = 0;
+  }
   queue<string> que;
   que.push("1");
   que.push("2");
@@ -120,126 +119,136 @@ void expect(){
       v_cp[i][j] = v[i][j];
     }
   }
-  for (int j = 1; j <= 7; j++){
-    ex[j] = 0;
-  }
-  while (decide_com == false && que_num++ <= 10){
+  int whcnt = 0;
+  while (decide_com == false && whcnt++ < 7){
+    player = 2;
     for (int i = 0; i < 9; i++){
       for (int j = 0; j < 9; j++){
         v[i][j] = v_cp[i][j];
       }
     }
-    if (ex[que.front()[0]-'0'] == -1){
-      cout << "del " << que.front() << endl;
-      que.pop();  continue;
-    }
     do_step(que.front());
-    if (v[1][1] == -1){   //7_overの場合
-      cout << "del " << que.front() << endl;
-      que.pop();  continue;
+    if (v[1][1] == -1){  //7_overの場合
+      ex[que.front()[0]-'0'] = -1;
+      que.pop();
+      continue;
     }
-
-////////////////////////////////////////////////////////////////////////////////////////////ここより下にバグあり
-    int sub_ex[8] = {0};  //sub_ex[0]は使わない
+    if (check_absolute_win(1) == true){
+      string ss = que.front();
+      ex[ss[0]-'0'] = -1;
+      que.pop();
+      continue;
+    }
+    bool ff = false;
     for (int i = 1; i <= 7; i++){
       for (int j = 1; j <= 7; j++){
-        if (check_reach(i, j, player) == true || check_reach(i, j, 3-player) == true){
-          sub_ex[j] = 1;  //相手の手順の絞り込み
+        if (check_reach(i, j, 1) == true){
+          ex[que.front()[0]-'0'] = -1;
+          ff = true;
         }
       }
     }
-    for (int j = 1; j <= 7 && check_7_over(j) == true; j++){
-      for (int ii = 7; ii >= 1; ii--){
-        if (v[ii][j] != Mark_1 && v[ii][j] != Mark_2){
-          switch (player){
-            case 1: v[ii][j] = Mark_1;  break;
-            case 2: v[ii][j] = Mark_2;  break;
+    if (ff == true) continue;
+    if (check_absolute_win(2) == true){
+      string s = que.front();
+      number_com = s[0]-'0';
+      if (check_7_over(number_com) == true){
+        decide_com = true;
+        break;
+      }
+    }
+    int next[8] = {0};
+    for (int i = 1; i <= 7; i++){
+      for (int j = 1; j <= 7; j++){
+        if (check_reach(i, j, 1) == true || check_reach(i, j, 2) == true){
+          next[j] = 1;
+        }
+      }
+    }
+    if (next[1]+next[2]+next[3]+next[4]+next[5]+next[6]+next[7] != 0){
+      bool fa = false;
+      for (int k = 1; k <= 7; k++){
+        if (next[k] == 1){
+          for (int ii = 7; ii >= 1; ii--){
+            if (v[ii][next[k]] != Mark_1 && v[ii][next[k]] != Mark_2){
+              switch (player){
+                case 1: v[ii][next[k]] = Mark_1;  player = 2;  break;
+                case 2: v[ii][next[k]] = Mark_2;  player = 1;  break;
+              }
+              break;
+            }
           }
+          if (check_absolute_win(1) == true){
+            ex[que.front()[0]-'0'] = -1;
+          }
+          if (check_absolute_win(2) == true){
+            fa = true;
+          }
+          if (check_absolute_win(2) == false){
+            fa = false;
+          }
+          for (int ii = 7; ii >= 0; ii--){
+            if (v[ii][next[k]] != Mark_1 && v[ii][next[k]] != Mark_2){
+              v[ii+1][next[k]] = (ii+1) * 10 + next[k];
+              break;
+            }
+          }
+        }
+      }
+      if (fa == true){
+        number_com = que.front()[0]-'0';
+        if (check_7_over(number_com) == true){
+          decide_com = true;
           break;
         }
       }
-      if (check_absolute_win(player) == true){
-        sub_ex[j] = 1;
-      }
-      for (int ii = 7; ii >= 1; ii--){
-        if (v[ii][j] != Mark_1 && v[ii][j] != Mark_2){
-          v[ii+1][j] = 10 * (ii + 1) + j;
+    } else {
+      for (int it = 1; it <= 7; it++){
+        for (int ii = 7; ii >= 1; ii--){
+          if (v[ii][it] != Mark_1 && v[ii][it] != Mark_2){
+            switch (player){
+              case 1: v[ii][it] = Mark_1;  player = 2;  break;
+              case 2: v[ii][it] = Mark_2;  player = 1;  break;
+            }
+            break;
+          }
+        }
+        if (check_absolute_win(1) == true){
+          ex[que.front()[0]-'0'] = -1;
+        }
+        for (int ii = 7; ii >= 0; ii--){
+          if (v[ii][it] != Mark_1 && v[ii][it] != Mark_2){
+            v[ii+1][it] = (ii+1) * 10 + it;
+            break;
+          }
         }
       }
     }
-    for (int j = 1; j <= 7 && sub_ex[j] == 1; j++){
-      if (check_absolute_win(1) == true){
-        ex[j] = -1;  continue;
-      }
-      if (check_absolute_win(2) == true && ex[j] != -1){
-        number_com = que.front()[0]-'0';
-        decide_com = true;
-        cout << "Absolute_win" << endl;
-        que_num = INF;
-      }
-    }
-    for (int j = 1; j <= 7 && ex[j] != -1; j++){
-      char add = j+'0';
-      string st = que.front()+add;
-      que.push(st);
-      cout << "return: " << st << endl;
-    }
-    cout << que.front() << " " << que_num << endl;
+
     que.pop();
-    player = 2;
+
   }
-  printf("ex[j]OK: ");
-  for (int j = 1; j <= 7 && ex[j] != -1; j++){
-    printf("%d ", j);
+  while (1){
+    if (ex[1]+ex[2]+ex[3]+ex[4]+ex[5]+ex[6]+ex[7] == -7){
+      number_com = GetRandom(1, 7);
+      if (check_7_over(number_com) == true){
+        decide_com = true;
+        break;
+      }
+    } else {
+      number_com = GetRandom(1, 7);
+      if (check_7_over(number_com) == true && ex[number_com] != -1){
+        decide_com = true;
+        break;
+      }
+    }
   }
-  puts("");
   for (int i = 0; i < 9; i++){
     for (int j = 0; j < 9; j++){
       v[i][j] = v_cp[i][j];
     }
   }
   player = 2;
-  bool f = false;
-  for (int j = 1; j <= 7; j++){
-    if (ex[j] != -1) f = true;
-  }
-  while (f){
-    number_com = GetRandom(1, 7);
-    if (ex[number_com] != -1 && check_7_over(number_com) == true){
-      cout << "Random from ex[j]" << endl;
-      decide_com = true;  f = false;
-      break;
-    }
-  }
-  while (decide_com == false){
-    number_com = GetRandom(1, 7);
-    if (check_7_over(number_com) == true){
-      cout << "Random" << endl;
-      decide_com = true;
-    }
-  }
-}
-
-
-void do_step(string str){
-  int step;
-  player = 2;
-  for (int i = 0; i < (signed)str.length(); i++){
-    step = str[i]-'0';
-    if (check_7_over(step) == false){
-      v[1][1] = -1;  //異常として知らせる
-      break;
-    }
-    for (int j = 7; j >= 1; j--){
-      if (v[j][step] != Mark_1 && v[j][step] != Mark_2){
-        switch (player){
-          case 1: v[j][step] = Mark_1;  player = 2;  break;
-          case 2: v[j][step] = Mark_2;  player = 1;  break;
-        }
-        break;
-      }
-    }
-  }
 }
 
 
@@ -438,6 +447,28 @@ int GetRandom(int min, int max){
 }
 
 
+//この関数終了後、playerは必ずしも2でないことに注意する
+void do_step(string str){
+  int step;
+  player = 2;
+  for (int i = 0; i < (signed)str.length(); i++){
+    step = str[i]-'0';
+    if (check_7_over(step) == false){
+      v[1][1] = -1;  //異常として知らせる
+    }
+    for (int j = 7; j >= 1; j--){
+      if (v[j][step] != Mark_1 && v[j][step] != Mark_2){
+        switch (player){
+          case 1: v[j][step] = Mark_1;  player = 2;  break;
+          case 2: v[j][step] = Mark_2;  player = 1;  break;
+        }
+        break;
+      }
+    }
+  }
+}
+
+
 //v[i][j]にput inできるならばtrueを返す
 bool check_put_able(int i, int j){
   if (i >= 1 && i <= 6 && j >= 1 && j <= 7){
@@ -475,12 +506,13 @@ bool check_absolute_win(int player){
   int cnt = 0;
   check_3_line();
   switch (player){
-    case 1: if (cnt_3_line_vd_1 >= 1){
+    case 1:
+            if (cnt_3_line_vd_1 >= 1){
               for (int j = 7; j >= 1; j--){
                 for (int i = 1; i <= 7; i++){
                   if (vd_1[i][j] >= 1 && check_put_able(i, j) == true){
                     cnt++;
-                    if (vd_1[i-1][j] >= 1){
+                    if (vd_1[i][j-1] != 0){
                       f = true;  break;
                     }
                   }
@@ -489,12 +521,13 @@ bool check_absolute_win(int player){
             }
             if (cnt >= 2) f = true;
             return f;
-    case 2: if (cnt_3_line_vd_2 >= 1){
+    case 2:
+            if (cnt_3_line_vd_2 >= 1){
               for (int j = 7; j >= 1; j--){
                 for (int i = 1; i <= 7; i++){
                   if (vd_2[i][j] >= 1 && check_put_able(i, j) == true){
                     cnt++;
-                    if (vd_2[i-1][j] >= 1){
+                    if (vd_2[i][j-1] != 0){
                       f = true;  break;
                     }
                   }
